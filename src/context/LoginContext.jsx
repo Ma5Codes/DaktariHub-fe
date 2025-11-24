@@ -13,6 +13,17 @@ export const LoginProvider = ({ children }) => {
     }
   }, []);
 
+  // Listen for storage changes (in case user logs in/out from another tab)
+  useEffect(() => {
+    const handleStorageChange = () => {
+      const token = localStorage.getItem('authToken');
+      setIsLoggedIn(!!token);
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
+
   return (
     <LoginContext.Provider value={{ isLoggedIn, setIsLoggedIn }}>
       {children}

@@ -40,7 +40,7 @@ const Login = () => {
     }
 
     try {
-      const response = await axios.post('http://localhost:6005/api/patients/login', {
+      const response = await axios.post('http://localhost:5000/api/auth/login', {
         email: formData.email,
         password: formData.password,
       }, {
@@ -63,17 +63,20 @@ const Login = () => {
           localStorage.setItem('userRole', response.data.user.role);
         }
 
-        alert('Login successful!');
+        // Update login state first
         setIsLoggedIn(true);
-
+        
         // Reset form
         setFormData({
           email: "",
           password: "",
         });
 
-        // Redirect to home page
-        navigate('/home');
+        // Show success message and navigate
+        console.log('Redirecting to home...');
+        setTimeout(() => {
+          navigate('/home', { replace: true });
+        }, 100); // Small delay to ensure state updates
       }
 
     } catch (error) {
