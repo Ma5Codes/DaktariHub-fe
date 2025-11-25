@@ -52,15 +52,20 @@ const Login = () => {
 
       console.log('Login successful:', response.data);
 
-      if (response.data.token) {
+      if (response.data.data && response.data.data.accessToken) {
         // Store the token in localStorage for future requests
-        localStorage.setItem('authToken', response.data.token);
+        localStorage.setItem('authToken', response.data.data.accessToken);
         localStorage.setItem('userEmail', formData.email);
         
         // Store user information from response
-        if (response.data.user) {
-          localStorage.setItem('userName', response.data.user.name);
-          localStorage.setItem('userRole', response.data.user.role);
+        if (response.data.data.user) {
+          localStorage.setItem('userName', response.data.data.user.name);
+          localStorage.setItem('userRole', response.data.data.user.role);
+        }
+        
+        // Store profile information if available
+        if (response.data.data.profile) {
+          localStorage.setItem('userProfile', JSON.stringify(response.data.data.profile));
         }
 
         // Update login state first
@@ -73,10 +78,14 @@ const Login = () => {
         });
 
         // Show success message and navigate
+        console.log('Token stored successfully:', localStorage.getItem('authToken'));
         console.log('Redirecting to home...');
-        setTimeout(() => {
-          navigate('/home', { replace: true });
-        }, 100); // Small delay to ensure state updates
+        
+        // Navigate immediately since token is now stored
+        navigate('/home', { replace: true });
+      } else {
+        console.error('Token not found in response:', response.data);
+        alert('Login failed: No token received');
       }
 
     } catch (error) {

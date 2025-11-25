@@ -38,8 +38,21 @@ const SignUp = () => {
         setLoading(true);
 
         // Validate required fields
-        if (!formData.fullName || !formData.email || !formData.selectedVal || !formData.phoneNumber) {
+        if (!formData.fullName || !formData.email || !formData.password || !formData.selectedVal || !formData.phoneNumber) {
             alert('Please fill in all required fields');
+            setLoading(false);
+            return;
+        }
+
+        // Validate password complexity
+        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/;
+        if (formData.password.length < 6) {
+            alert('Password must be at least 6 characters long');
+            setLoading(false);
+            return;
+        }
+        if (!passwordRegex.test(formData.password)) {
+            alert('Password must contain at least one uppercase letter, one lowercase letter, and one number');
             setLoading(false);
             return;
         }
@@ -47,15 +60,12 @@ const SignUp = () => {
         const formDataToSend = {
             name: formData.fullName,
             email: formData.email,
-            password: formData.password, // Include password in the request
-            gender: formData.selectedVal,
-            mobile: formData.phoneNumber,
-            age: formData.age || 0, // Provide default value for age
-            role: formData.selectedVal === 'doctor' ? 'doctor' : 'patient', // Send role based on selection
+            password: formData.password,
+            role: formData.selectedVal === 'doctor' ? 'doctor' : 'patient'
         };
 
         try {
-            const response = await axios.post('http://localhost:6005/api/patients/register', formDataToSend, {
+            const response = await axios.post('http://localhost:5000/api/auth/register', formDataToSend, {
                 headers: {
                     'Content-Type': 'application/json',
                 },
@@ -91,6 +101,20 @@ const SignUp = () => {
                 alert('Request timed out. Please check your connection and try again.');
             } else if (error.response?.status === 409) {
                 alert('User already exists with this email.');
+            } else if (error.response?.data?.error?.details) {
+                // Show specific validation errors in a user-friendly way
+                const validationErrors = error.response.data.error.details;
+                const errorMessages = validationErrors.map(err => {
+                    // Make error messages more user-friendly
+                    if (err.field === 'emergencyContact.name') return 'Emergency contact name is missing';
+                    if (err.field === 'emergencyContact.phoneNumber') return 'Emergency contact phone number is missing';
+                    if (err.field === 'emergencyContact.relationship') return 'Emergency contact relationship is missing';
+                    if (err.field === 'phoneNumber') return 'Phone number is required';
+                    if (err.field === 'gender') return 'Gender is required';
+                    if (err.field === 'dateOfBirth') return 'Date of birth is required';
+                    return `${err.field}: ${err.message}`;
+                });
+                alert(`Please complete your registration:\n${errorMessages.join('\n')}`);
             } else {
                 alert(`Registration failed: ${error.response?.data?.message || error.message}`);
             }
