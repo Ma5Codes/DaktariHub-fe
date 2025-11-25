@@ -3,12 +3,17 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { FaSearch, FaCalendarPlus, FaInfoCircle } from 'react-icons/fa';
 import DoctorModal from './DoctorProfile'; // Import the modal component
+import BookingConfirmationModal from './BookingConfirmationModal';
+import { useAuth } from '../context/AuthContext';
 
 const Doctors = ({ doctors }) => {
     const navigate = useNavigate();
+    const { apiRequest, isPatient, isAuthenticated } = useAuth();
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedDoctor, setSelectedDoctor] = useState(null); // State to manage selected doctor
     const [isModalOpen, setIsModalOpen] = useState(false); // State to manage modal visibility
+    const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
+    const [doctorToBook, setDoctorToBook] = useState(null);
 
     const filteredDoctors = doctors.filter(doctor =>
         doctor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -23,6 +28,49 @@ const Doctors = ({ doctors }) => {
     const handleCloseModal = () => {
         setIsModalOpen(false);
         setSelectedDoctor(null); // Reset the selected doctor
+    };
+
+    const handleBookAppointment = (doctor) => {
+        if (!isAuthenticated) {
+            // Redirect to login if not authenticated
+            navigate('/login');
+            return;
+        }
+
+        if (!isPatient()) {
+            alert('Only patients can book appointments');
+            return;
+        }
+
+        setDoctorToBook(doctor);
+        setIsBookingModalOpen(true);
+    };
+
+    const handleConfirmBooking = async (appointmentData) => {
+        try {
+            const response = await apiRequest('/appointments/book', {
+                method: 'POST',
+                body: appointmentData
+            });
+
+            if (response.success) {
+                alert('Appointment booked successfully!');
+                setIsBookingModalOpen(false);
+                setDoctorToBook(null);
+                // Optionally navigate to appointments page
+                navigate('/appointments');
+            } else {
+                alert(response.message || 'Failed to book appointment');
+            }
+        } catch (error) {
+            console.error('Error booking appointment:', error);
+            alert(error.message || 'Failed to book appointment');
+        }
+    };
+
+    const handleCloseBookingModal = () => {
+        setIsBookingModalOpen(false);
+        setDoctorToBook(null);
     };
 
     return (
@@ -65,7 +113,7 @@ const Doctors = ({ doctors }) => {
                                 className="bg-primary text-accent px-4 py-2 rounded-full font-bold flex items-center justify-center"
                                 onClick={(e) => {
                                     e.stopPropagation(); // Prevent triggering the card click event
-                                    navigate(`/appointments?doctorId=${doctor.id}`);
+                                    handleBookAppointment(doctor);
                                 }}
                             >
                                 <FaCalendarPlus className="mr-2" />
@@ -112,8 +160,8 @@ const Doctors = ({ doctors }) => {
                             <button 
                                 className="bg-accent text-primary px-6 py-2 rounded-full font-bold hover:bg-primary hover:text-accent transition duration-300 flex items-center justify-center"
                                 onClick={() => {
-                                    navigate(`/appointments?doctorId=${selectedDoctor.id}`);
-                                    handleCloseModal(); // Close the modal after navigating
+                                    handleCloseModal(); // Close the modal first
+                                    handleBookAppointment(selectedDoctor);
                                 }}
                             >
                                 <FaCalendarPlus className="mr-2" />
@@ -123,6 +171,14 @@ const Doctors = ({ doctors }) => {
                     </div>
                 </div>
             )}
+
+            {/* Booking Confirmation Modal */}
+            <BookingConfirmationModal
+                isOpen={isBookingModalOpen}
+                onClose={handleCloseBookingModal}
+                doctor={doctorToBook}
+                onConfirmBooking={handleConfirmBooking}
+            />
         </div>
     );
 };

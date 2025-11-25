@@ -1,18 +1,23 @@
 import { useState, useEffect, useContext } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from 'framer-motion';
-import { FaUser, FaSignInAlt, FaBars, FaTimes, FaSignOutAlt } from 'react-icons/fa';
+import { FaUser, FaSignInAlt, FaBars, FaTimes, FaSignOutAlt, FaBell } from 'react-icons/fa';
 import Logo from '../assets/logo.svg';
 import LoginContext from '../context/LoginContext';
+import { useAuth } from '../context/AuthContext';
+import DoctorNotifications from './DoctorNotifications';
 
 const Header = () => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [activeItem, setActiveItem] = useState('/');
     const [userName, setUserName] = useState('');
     const [userRole, setUserRole] = useState('');
+    const [showNotifications, setShowNotifications] = useState(false);
+    const [notificationCount, setNotificationCount] = useState(0);
     const location = useLocation();
     const navigate = useNavigate();
     const { isLoggedIn, setIsLoggedIn } = useContext(LoginContext);
+    const { apiRequest, isDoctor } = useAuth();
 
     useEffect(() => {
         setActiveItem(location.pathname);
@@ -26,6 +31,29 @@ const Header = () => {
             setUserRole(storedUserRole);
         }
     }, [location]);
+
+    // Fetch notification count for doctors
+    useEffect(() => {
+        const fetchNotificationCount = async () => {
+            if (isDoctor() && isAuthenticated) {
+                try {
+                    const response = await apiRequest('/appointments/notifications');
+                    if (response.success) {
+                        setNotificationCount(response.data.length);
+                    }
+                } catch (error) {
+                    console.error('Error fetching notification count:', error);
+                }
+            }
+        };
+
+        fetchNotificationCount();
+        
+        // Set up polling for notifications every 30 seconds
+        const interval = setInterval(fetchNotificationCount, 30000);
+        
+        return () => clearInterval(interval);
+    }, [isDoctor, isAuthenticated]);
 
     const handleLogout = () => {
         // Clear localStorage
@@ -103,6 +131,21 @@ const Header = () => {
                         {isAuthenticated ? (
                             // Show user profile when logged in
                             <div className="flex items-center space-x-3">
+                                {isDoctor() && (
+                                    <div className="relative">
+                                        <button
+                                            onClick={() => setShowNotifications(true)}
+                                            className="relative bg-accent/20 p-2 rounded-full hover:bg-accent/30 transition duration-300"
+                                        >
+                                            <FaBell className="text-accent text-lg" />
+                                            {notificationCount > 0 && (
+                                                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                                                    {notificationCount > 9 ? '9+' : notificationCount}
+                                                </span>
+                                            )}
+                                        </button>
+                                    </div>
+                                )}
                                 <div className="flex items-center space-x-2 bg-accent/20 px-3 py-1.5 rounded-full">
                                     <div className="w-8 h-8 bg-accent rounded-full flex items-center justify-center">
                                         <FaUser className="text-primary text-sm" />
@@ -203,6 +246,27 @@ const Header = () => {
                     )}
                 </AnimatePresence>
             </div>
+
+            {/* Doctor Notifications Modal */}
+            <DoctorNotifications
+                isOpen={showNotifications}
+                onClose={() => {
+                    setShowNotifications(false);
+                    // Refresh notification count when modal closes
+                    if (isDoctor() && isAuthenticated) {
+                        setTimeout(async () => {
+                            try {
+                                const response = await apiRequest('/appointments/notifications');
+                                if (response.success) {
+                                    setNotificationCount(response.data.length);
+                                }
+                            } catch (error) {
+                                console.error('Error refreshing notification count:', error);
+                            }
+                        }, 500);
+                    }
+                }}
+            />
         </header>
     );
 };
