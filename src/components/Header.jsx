@@ -17,7 +17,7 @@ const Header = () => {
     const location = useLocation();
     const navigate = useNavigate();
     const { isLoggedIn, setIsLoggedIn } = useContext(LoginContext);
-    const { apiRequest, isDoctor } = useAuth();
+    const { apiRequest, isDoctor, isAuthenticated } = useAuth();
 
     useEffect(() => {
         setActiveItem(location.pathname);
