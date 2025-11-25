@@ -20,6 +20,7 @@ import SignUp from "./components/SignUp";
 import Login from "./components/Login";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { LoginProvider } from "./context/LoginContext";
+import { ThemeProvider } from "./context/ThemeContext";
 
 function App() {
   const [doctors, setDoctors] = useState([
@@ -125,12 +126,13 @@ function App() {
   ]);
 
   return (
-    <LoginProvider>
-      <Router>
-        <ScrollToTop />
-        <div className="bg-light min-h-screen font-sans text-primary">
-          <Header />
-          <main className="container mx-auto px-4 py-8">
+    <ThemeProvider>
+      <LoginProvider>
+        <Router>
+          <ScrollToTop />
+          <div className="bg-light dark:bg-gray-900 min-h-screen font-sans text-primary dark:text-white transition-colors duration-300">
+            <Header />
+            <main className="container mx-auto px-4 py-8">
             <Routes>
               <Route path="/" element={<SignUp />} />
               <Route path="/signup" element={<SignUp />} />
@@ -204,11 +206,12 @@ function App() {
               <Route path="*" element={<NotFound />} />
             </Routes>
           </main>
-          <ScrollToTopButton />
-          <Footer />
-        </div>
-      </Router>
-    </LoginProvider>
+            <ScrollToTopButton />
+            <Footer />
+          </div>
+        </Router>
+      </LoginProvider>
+    </ThemeProvider>
   );
 }
 

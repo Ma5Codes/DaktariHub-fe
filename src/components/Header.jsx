@@ -1,10 +1,11 @@
 import { useState, useEffect, useContext } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from 'framer-motion';
-import { FaUser, FaSignInAlt, FaBars, FaTimes, FaSignOutAlt, FaBell } from 'react-icons/fa';
+import { FaUser, FaSignInAlt, FaBars, FaTimes, FaSignOutAlt, FaBell, FaMoon, FaSun } from 'react-icons/fa';
 import Logo from '../assets/logo.svg';
 import LoginContext from '../context/LoginContext';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import DoctorNotifications from './DoctorNotifications';
 
 const Header = () => {
@@ -18,6 +19,7 @@ const Header = () => {
     const navigate = useNavigate();
     const { isLoggedIn, setIsLoggedIn } = useContext(LoginContext);
     const { apiRequest, isDoctor, isAuthenticated } = useAuth();
+    const { isDarkMode, toggleTheme } = useTheme();
 
     useEffect(() => {
         setActiveItem(location.pathname);
@@ -91,11 +93,10 @@ const Header = () => {
 
     const navItems = getNavItems();
 
-    // Check if user is authenticated
-    const isAuthenticated = isLoggedIn || localStorage.getItem('authToken');
+    // Check if user is authenticated (using isAuthenticated from useAuth hook)
 
     return (
-        <header className="bg-gradient-to-r from-primary to-secondary py-3 px-4">
+        <header className="bg-gradient-to-r from-primary to-secondary dark:from-gray-800 dark:to-gray-700 py-3 px-4 transition-colors duration-300">
             <div className="container mx-auto">
                 <div className="flex justify-between items-center">
                     <Link to="/home" className="flex items-center space-x-2">
@@ -128,6 +129,19 @@ const Header = () => {
                     )}
 
                     <div className="hidden md:flex items-center space-x-3">
+                        {/* Theme Toggle Button */}
+                        <button
+                            onClick={toggleTheme}
+                            className="bg-accent/20 p-2 rounded-full hover:bg-accent/30 transition duration-300"
+                            title={isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+                        >
+                            {isDarkMode ? (
+                                <FaSun className="text-accent text-lg" />
+                            ) : (
+                                <FaMoon className="text-accent text-lg" />
+                            )}
+                        </button>
+
                         {isAuthenticated ? (
                             // Show user profile when logged in
                             <div className="flex items-center space-x-3">
@@ -207,6 +221,27 @@ const Header = () => {
                                             {item.title}
                                         </Link>
                                     ))}
+                                    
+                                    {/* Theme Toggle in Mobile Menu */}
+                                    <div className="border-t border-accent/30 mt-2 pt-2">
+                                        <button
+                                            onClick={toggleTheme}
+                                            className="flex items-center w-full py-2 px-3 text-base font-medium text-light hover:text-accent transition duration-300"
+                                        >
+                                            {isDarkMode ? (
+                                                <>
+                                                    <FaSun className="mr-2" />
+                                                    Light Mode
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <FaMoon className="mr-2" />
+                                                    Dark Mode
+                                                </>
+                                            )}
+                                        </button>
+                                    </div>
+
                                     <div className="border-t border-accent/30 mt-2 pt-2">
                                         <div className="px-3 py-2 text-light text-sm">
                                             <div>Welcome, {userName || 'User'}</div>
@@ -240,6 +275,26 @@ const Header = () => {
                                     >
                                         <FaSignInAlt className="inline-block mr-1" />Log In
                                     </Link>
+                                    
+                                    {/* Theme Toggle for Non-authenticated Mobile Menu */}
+                                    <div className="border-t border-accent/30 mt-2 pt-2">
+                                        <button
+                                            onClick={toggleTheme}
+                                            className="flex items-center w-full py-2 px-3 text-base font-medium text-light hover:text-accent transition duration-300"
+                                        >
+                                            {isDarkMode ? (
+                                                <>
+                                                    <FaSun className="mr-2" />
+                                                    Light Mode
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <FaMoon className="mr-2" />
+                                                    Dark Mode
+                                                </>
+                                            )}
+                                        </button>
+                                    </div>
                                 </>
                             )}
                         </motion.div>
